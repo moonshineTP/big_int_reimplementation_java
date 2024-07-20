@@ -511,7 +511,7 @@ public class bigNum {
             high.setALL("1");
             high.mutiplyBigNumToPowerOfTen(u.LENGTH - v.LENGTH + 1);
 
-            while (isSmaller(low, high)){
+            while (isABSSmaller(low, high)){
                 bigNum mid = divideByTwo(add(add(low, high), one));
                 bigNum tmp = product(mid, vABS);
                 if (isBigger(tmp, uABS)){
