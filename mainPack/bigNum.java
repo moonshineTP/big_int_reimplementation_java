@@ -1,7 +1,7 @@
 package mainPack;
 
 public class bigNum {
-    // debug
+    // ____________debug______________
     class Debug{
         static void flag(){
             System.out.println("flag"); // create a flag
@@ -36,51 +36,61 @@ public class bigNum {
         }
     }
 
-    // variables
-    private String NUM; // the number including sign, without leading zeros
+    //___________variables____________
+
+    private String NUM; // the number including its sign, without leading zeros
     private String ABS; // similarly but without any sign
     private int LENGTH; // length of the ABS, useful in divide() where we create low/high for binary search
     private boolean SIGN = true; // true if positive or equal zero, false otherwise
     private boolean ZERO = true; // is zero or not
     
-    // static variables
+    //____________static variables______________
     private static int TOTAL = 0; // total declared bigNum 
-    private static int THRESHOLD = 10; // Recurrence threshold for Karatsuba algorithm in product()
+    private static int THRESHOLD = 10; // Recurrence threshold for Karatsuba algorithm in product(), honestly i dont know the best value
 
-    // constructor
+    // ___________constructor___________________
     public bigNum(){
-        TOTAL++;
+        TOTAL++; // only increase TOTAL
     }
 
-    // setter
+    // ___________setter________________________
     public void setALL (String num){ // set a bigNum from an arbitrary string, throw error when it's not number
         int length = num.length();
-        if (length == 0) throw new IllegalArgumentException("Invalid Number.");
+        if (length == 0) throw new IllegalArgumentException("Invalid Number."); //null string
+        
         else{
             boolean flag = true;
-            for (int i = 1; i < length; i++){
+
+            // check isNum() for all character except the first one (maybe it's '-')
+            for (int i = 1; i < length; i++){ 
                 if (num.charAt(i) < 48 || num.charAt(i) > 57){
                     flag = false;
                     break;
                 } 
             }
-            if (flag){
+            if (!flag) throw new IllegalArgumentException("Invalid Number.");
+            else{
                 if (num.charAt(0) == '-'){
                     this.SIGN = false;
-                    int indexNotZero = -1; 
+                    int indexNonZero = -1; 
+
+                    // check for the first non-zero digit 
                     for (int i = 1; i < length; i++){
                         if (num.charAt(i) != '0'){
                             this.ZERO = false;
-                            indexNotZero = i;
+                            indexNonZero = i;
                             break;
                         }
                     }
-                    if (indexNotZero != -1){
+
+                    if (indexNonZero != -1){ // find one non-zero digit
                         this.ZERO = false;
-                        this.NUM = "-" + num.substring(indexNotZero, length);
-                        this.ABS = num.substring(indexNotZero, length);
-                        this.LENGTH = length - indexNotZero;
+                        this.NUM = "-" + num.substring(indexNonZero, length);
+                        this.ABS = num.substring(indexNonZero, length);
+                        this.LENGTH = length - indexNonZero;
                     }
+
+                    // if indexNonZero = -1, then the string is -00000...00, hence its zero.
                     else{
                         this.NUM = "0";
                         this.SIGN = true;
@@ -88,7 +98,8 @@ public class bigNum {
                         this.LENGTH = 1;
                     }       
                 }
-                else if (num.charAt(0) >= 48 && num.charAt(0) <= 57){
+
+                else if (num.charAt(0) >= 48 && num.charAt(0) <= 57){ // do the exact same thing except the first character is a number
                     this.SIGN = true;
                     int indexNotZero = -1; 
                     for (int i = 0; i < length; i++){
@@ -110,25 +121,27 @@ public class bigNum {
                         this.LENGTH = 1;
                     }     
                 }
-                else throw new IllegalArgumentException("Invalid Number.");;
+                else throw new IllegalArgumentException("Invalid Number."); //invalid first character.
             }
         }
     }
 
     public void setSIGN(boolean sign){ // set sign of a bigNum directly
-        if (!this.ZERO){
-            if (this.SIGN && (!sign)){
+        if (!this.ZERO){ //only change sign if its not zero
+
+            if (this.SIGN && (!sign)){ //from positive to negative
                 this.SIGN = sign;
-                this.NUM = "-" + this.NUM;
+                this.NUM = "-" + this.NUM; //add minus sign
+            
             }
-            if ((!this.SIGN) && sign){
+            if ((!this.SIGN) && sign){ //from negative to positive
                 this.SIGN = sign;
-                this.NUM = this.NUM.substring(1);
+                this.NUM = this.NUM.substring(1); // neglect minus sign
             }
         } 
-    }    // the remaining explains itself well enough
+    }    
 
-    // getter
+    // ____________getter___________________
     public String getNUM(){
         return this.NUM;
     }
@@ -153,7 +166,9 @@ public class bigNum {
         return TOTAL;
     }
 
-    // comparator
+    // ____________comparator___________________
+
+    // ABS-function only-compare-absolute-value. 
     public static boolean isEqual (bigNum u, bigNum v){
         if (u.NUM == v.NUM) return true;
         else return false;
@@ -165,15 +180,19 @@ public class bigNum {
     }
 
     public static boolean isABSsmaller (bigNum u, bigNum v){
-        if (u.LENGTH < v.LENGTH){
+        if (u.LENGTH < v.LENGTH){ // u have less digit than v, hence the abs is smaller
             return true;
         }
-        else if (u.LENGTH > v.LENGTH) return false;
+
+        else if (u.LENGTH > v.LENGTH) return false; // the opposite
+        
         else{
             for (int i = 0; i < u.LENGTH; i++){
-                if (u.ABS.charAt(i) < v.ABS.charAt(i)) return true;
+                // check the first different digit
+                if (u.ABS.charAt(i) < v.ABS.charAt(i)) return true; 
                 if (u.ABS.charAt(i) > v.ABS.charAt(i)) return false;
             }
+            // the two abs is equal, return false
             return false;
         }
     }
@@ -182,13 +201,15 @@ public class bigNum {
         return (!(isABSequal(u, v) || isABSsmaller(u, v)));
     }
 
+    // the following function utilize ABS and SIGN to compare number 
+
     public static boolean isSmaller (bigNum u, bigNum v){
-        if (!u.SIGN){
+        if (!u.SIGN){ // case u is negative
             if (v.SIGN) return true;
             if (isABSsmaller(u, v)) return false;
             return true;
         }
-        else{
+        else{ // u is positive
             if (!v.SIGN) return false;
             if (isABSsmaller(u, v)) return true;
             return false;
@@ -207,7 +228,9 @@ public class bigNum {
         return (isBigger(u, v) || isEqual(u, v));
     }
 
-    // converters
+    // ______________converters__________________
+
+    //convert primitive type to BigNum
     public static bigNum toBigNum (byte u){
         bigNum result = new bigNum();
         result.setALL(Byte.toString(u));
@@ -244,21 +267,31 @@ public class bigNum {
         return result;
     }
 
-    public static bigNum binaryToBigNum (String u){
+    public static bigNum binaryToBigNum (String u){ // convert ONLY binary string, you should know basic math for binary number beforehand
         int lu = u.length();
-        bigNum result = new bigNum();
+        bigNum result = new bigNum(); // store result
         result.setALL("0");
-        bigNum two = toBigNum(2);
-        bigNum powOfTwo = new bigNum();
+
+        bigNum two = toBigNum(2); // just 2 but BigNum
+        bigNum powOfTwo = new bigNum(); //power of 2, initially 2^0 = 1.
         powOfTwo.setALL("1");
+        
+
+        // each loop check the corresponding digit (from right to left) is 1 or not. 
+        // If yes, increase with the corresponding power stored in powOfTwo.
+        
         for (int i = 0; i < lu; i++){
-            if (u.charAt(lu - i - 1) == '1') result.increment(powOfTwo);
-            else if (u.charAt(lu - i - 1) != '0') throw new IllegalArgumentException("Invalid Number.");
+            if (u.charAt(lu - i - 1) == '1') result.increment(powOfTwo); // increase the result iff the corresponding digit is one
+            else if (u.charAt(lu - i - 1) != '0') throw new IllegalArgumentException("Invalid Number."); // invalid binary string
             powOfTwo = product(powOfTwo, two);
         }
+        
         return result;
     }
-
+    
+    // converting BigNum back to primitive type require modulus() function at line 563 to calculate the last bits 
+    // (for example: 16 for short, 32 for int)  to fit the type.
+    
     public static byte toByte (bigNum u){
         bigNum v = modulus(u, toBigNum(Byte.MAX_VALUE + 1));
         return Byte.parseByte(v.NUM);
@@ -285,21 +318,23 @@ public class bigNum {
     }
     
     public static String toString (bigNum u){
-        return u.NUM;
+        return u.NUM; // just return NUM lol
     }
 
     public static String toBinary (bigNum u){
-        String resReversed = "";
-        bigNum u1 = u.clone();
+        String resReversed = ""; // the answer is store in reversed, then reverse and output that.
+        
+        bigNum u1 = u.clone(); // clone
         while (!u1.ZERO){
-            resReversed += (u1.ABS.charAt(u1.LENGTH - 1) % 2 == 0) ? "0" : "1";
+            resReversed += (u1.ABS.charAt(u1.LENGTH - 1) % 2 == 0) ? "0" : "1"; //add the digit in reverse order 
             u1 = divideByTwo(u1);
         }
+        // reverse it back and output
         String result = operatorHandling.revString(resReversed);
         return result; 
     }
 
-    // operators
+    // __________operators________________
     public void assign(bigNum u){
         this.setALL(u.getNUM());
     }
@@ -511,7 +546,7 @@ public class bigNum {
             high.setALL("1");
             high.mutiplyBigNumToPowerOfTen(u.LENGTH - v.LENGTH + 1);
 
-            while (isABSSmaller(low, high)){
+            while (isSmaller(low, high)){
                 bigNum mid = divideByTwo(add(add(low, high), one));
                 bigNum tmp = product(mid, vABS);
                 if (isBigger(tmp, uABS)){

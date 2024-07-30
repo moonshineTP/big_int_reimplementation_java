@@ -13,7 +13,7 @@ public class Main {
         long startTime = System.nanoTime();
         System.out.println(bigNum.product(u, v).getNUM());
         long endTime = System.nanoTime();
-        System.out.printf("Time taken: %.12f seconds", (endTime - startTime) / 1000000000f); 
+        System.out.printf("Time taken: %.12f seconds",(endTime - startTime) / 1000000000f); 
         TP.close();
     }
 }
