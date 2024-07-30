@@ -335,63 +335,72 @@ public class bigNum {
     }
 
     // __________operators________________
-    public void assign(bigNum u){
+    public void assign(bigNum u){  // assign the current number the value of u.
         this.setALL(u.getNUM());
     }
 
-    public bigNum clone(){
+    public bigNum clone(){ // clone the value
         bigNum other = new bigNum();
         other.setALL(this.NUM);
         return other;
     }
 
-    public void abs (){
+    public void abs (){ //return absolute value
         this.setSIGN(true);
     }
 
-    public void inverse (){
+    public void complement (){ // return the complement
         this.setSIGN(!this.getSIGN());
     }
 
-    public static void swap (bigNum u, bigNum v){
+    public static void swap (bigNum u, bigNum v){ //swap the value
         String w = u.getNUM();
         u.setALL(v.getNUM());
         v.setALL(w);
     }
 
-    public static bigNum add (bigNum u, bigNum v){
-        String resReversed = "";
+    public static bigNum add (bigNum u, bigNum v){  // add two BigNum
+        // again, store the answer but in reversed order, thats how addition works, from right to left.
+        String resReversed = ""; 
+        // store sign, later add to the result string
         String sign = "";
+        //length of two number
         int lu = u.LENGTH;
         int lv = v.LENGTH;
+        // abs of two number
         String u1 = u.ABS;
         String v1 = v.ABS;
+        // max and min length of two number
         int max = Math.max(lu, lv);
         int min = lu + lv - max;
         
-        if (u.SIGN == v.SIGN){
+        // if u and v has the same sign, we perform addition of two abs, else we subtract the bigger to the smaller.
+        if (u.SIGN == v.SIGN){ //addition case
             if (u.SIGN == false) sign += "-";   
+            // you should know how to add with carries
             carryWrapper carry = new carryWrapper();
             carry.set(0);
+            // add two abs from left to right, stop at the leftmost digit of the smaller one.
             for (int i = 0; i < min; i++){
                 resReversed += operatorHandling.addOneDigit(u1.charAt(lu - i - 1), v1.charAt(lv - i - 1), carry);
             }
+            // add the remaining digit of the bigger one
             if (max == lu){
                 for (int i = min; i < max; i++){
                     resReversed += operatorHandling.addOneDigit(u1.charAt(lu - i - 1), '0', carry);
                 }
-                if (carry.get() == 1) resReversed += 1;
+                if (carry.get() == 1) resReversed += '1'; // dont forget to add 1 after all number if the carry is 1.
             }
             else{
                 for (int i = min; i < max; i++){
                     resReversed += operatorHandling.addOneDigit('0', v1.charAt(lv - i - 1), carry);
                 }
-                if (carry.get() == 1) resReversed += 1;
+                if (carry.get() == 1) resReversed += '1';
             }
         }
         
-        else{
-            if (isABSsmaller(u, v)){
+        else{ //subtraction case
+            if (isABSsmaller(u, v)){ // swap the two abs string so that u is the bigger.
                 String tmpString = u1;
                 u1 = v1;
                 v1 = tmpString;
@@ -400,40 +409,46 @@ public class bigNum {
                 lv = tmpInt;
                 if (u.SIGN = true) sign += "-";
             }
-            else if (u.SIGN == false){
+
+            else if (u.SIGN == false){ // set sign
                 sign += "-";
             }
+            // again, subtraction requires borrow.
             borrowWrapper borrow = new borrowWrapper();
             borrow.set(0);
+
             for (int i = 0; i < min; i++){
                 resReversed += operatorHandling.subtractOneDigit(u1.charAt(lu - i - 1), v1.charAt(lv - i - 1), borrow);
             }
+            
             for (int i = min; i < max; i++){
                 resReversed += operatorHandling.subtractOneDigit(u1.charAt(lu - i - 1), '0', borrow);
             }
         }
+        
         bigNum result = new bigNum();
-        result.setALL(sign + operatorHandling.revString(resReversed));
+        // add the resulting string (reversed) behind the sign, use that to set the result BigNum
+        result.setALL(sign + operatorHandling.revString(resReversed)); 
         return result;
     }
     
-    public static bigNum subtract (bigNum u, bigNum v){
+    public static bigNum subtract (bigNum u, bigNum v){ //subtraction is just adding complement lmao
         bigNum v1 = v.clone();
-        v1.inverse();
+        v1.complement();
         return bigNum.add(u, v1);
     }
 
-    public void increment (bigNum v){
+    public void increment (bigNum v){ // increment the current number
         bigNum v1 = add(this, v);
         assign(v1);
     }
 
-    public void decrement (bigNum v){
+    public void decrement (bigNum v){ // same
         bigNum v1 = subtract(this, v);
         assign(v1);
     }
 
-    private void mutiplyBigNumToPowerOfTen (int power){
+    private void mutiplyBigNumToPowerOfTen (int power){ // for normal multiplying
         String num = this.NUM;
         for (int i = 0; i < power; i++){
             num += "0";
@@ -441,7 +456,7 @@ public class bigNum {
         this.setALL(num);
     }
 
-    private static bigNum productBigNumToOneDigit (bigNum u, int v){
+    private static bigNum productBigNumToOneDigit (bigNum u, int v){ // quite the same to add()
         String resReversed = "";
         String u1 = u.ABS;
         int lu = u.LENGTH;
@@ -464,6 +479,7 @@ public class bigNum {
         String v1 = v.getABS();
         int lv = v.LENGTH;
         bigNum result = new bigNum();
+        // in each loop, multiplying u to the digit of v and the corresponding power of ten, then add to the answer
         result.setALL("0");
         for (int i = 0; i < lv; i++){
             bigNum w = productBigNumToOneDigit(u1, v1.charAt(lv - i - 1) - 48);
@@ -473,7 +489,8 @@ public class bigNum {
         return result;
     }
 
-    public static bigNum product(bigNum u, bigNum v){
+    // the next function use Karatsuba's algorithm, need some preresquisites
+    public static bigNum product(bigNum u, bigNum v){ 
         bigNum u0 = u.clone();
         bigNum v0 = v.clone();
         if (isSmaller(u, v)) swap(u0, v0);
@@ -481,10 +498,11 @@ public class bigNum {
         String v1 = v0.ABS;
         int lu = u0.LENGTH;
         int lv = v0.LENGTH;
-        if (lu <= THRESHOLD || lv <= THRESHOLD){
-            return productBigNumToBigNumSlow(u, v);
+        if (lu <= THRESHOLD || lv <= THRESHOLD){ // now the THRESHOLD is in use
+            return productBigNumToBigNumSlow(u, v); 
         }
         
+        // dividing each number into two parts
         bigNum A = new bigNum();
         bigNum B = new bigNum();
         bigNum C = new bigNum();
@@ -495,7 +513,7 @@ public class bigNum {
         C.setALL(v1.substring(0, lv - l));
         D.setALL(v1.substring(lv - l));
 
-        
+        // let the algorithm cooks
         bigNum U = new bigNum();
         bigNum V = new bigNum();
         bigNum W = new bigNum();
@@ -512,11 +530,14 @@ public class bigNum {
         result.increment(U);
         result.increment(V);
         result.increment(W);
+        
+        // dont forget to setSIGN.
         result.setSIGN(!(U.SIGN ^ V.SIGN));
         return result;
     }
 
-    private static bigNum divideByTwo (bigNum u){
+    // to be able to divide by an arbitrary number, first we need to be able to divide by two
+    private static bigNum divideByTwo (bigNum u){ 
         bigNum result = new bigNum();
         String res = "";
         carryWrapper carry = new carryWrapper();
@@ -528,24 +549,28 @@ public class bigNum {
         return result;
     }
 
+    // to divide, we approximate the answer using binary search (hence the need for divideByTwo())
     public static bigNum divide (bigNum u, bigNum v){
-        boolean sign = !(u.SIGN ^ v.SIGN);
-        bigNum zero = new bigNum();
-        zero.setALL("0");
-        if (isSmaller(u, v)) return zero;
+        boolean sign = !(u.SIGN ^ v.SIGN); // the resulting sign
+        bigNum zero = bigNum.toBigNum(0);
+        
+        if (isABSsmaller(u, v)) return zero; // sure
+
         else{
             bigNum uABS = u.clone();
             uABS.abs();
             bigNum vABS = v.clone();
             vABS.abs();
             bigNum one = toBigNum(1);
+            // the boundary of the answer, this is where the LENGTH helps.
             bigNum low = new bigNum();
             low.setALL("1");
             low.mutiplyBigNumToPowerOfTen(u.LENGTH - v.LENGTH - 1);
             bigNum high = new bigNum();
             high.setALL("1");
             high.mutiplyBigNumToPowerOfTen(u.LENGTH - v.LENGTH + 1);
-
+            
+            //binary search
             while (isSmaller(low, high)){
                 bigNum mid = divideByTwo(add(add(low, high), one));
                 bigNum tmp = product(mid, vABS);
@@ -556,22 +581,26 @@ public class bigNum {
                     low = mid;
                 }
             }
+            
+            // return
             low.setSIGN(sign);
             return low;
         }
     }
 
-    public static bigNum modulus (bigNum u, bigNum v){
+    public static bigNum modulus (bigNum u, bigNum v){ //basic arithmetics
         return subtract(u, product(v, divide(u, v)));
     }
-
-    public static bigNum andOperator (bigNum u, bigNum v){
+    
+    // bitwise operators
+    public static bigNum andOperator (bigNum u, bigNum v){ 
         String u1 = toBinary(u);
         String v1 = toBinary(v);
         int lu = u1.length();
         int lv = v1.length();
         String result = "";
-        if (lu < lv){
+        
+        if (lu < lv){ // swap for convenience
             String tmpString = u1;
             u1 = v1;
             v1 = tmpString;
@@ -579,6 +608,8 @@ public class bigNum {
             lu = lv;
             lv = tmpInt;
         }
+        
+        // in each loop, compare the corresponding digit of two numbers.
         for (int i = 0; i < lu - lv; i++) result += '0';
         for (int i = 0; i < lv; i++){
             result += ((u1.charAt(lu - lv + i) == '1') && (v1.charAt(i) == '1')) ? '1' : '0';
@@ -586,7 +617,7 @@ public class bigNum {
         return binaryToBigNum(result);
     }
 
-    public static bigNum orOperator (bigNum u, bigNum v){
+    public static bigNum orOperator (bigNum u, bigNum v){ // quite the same
         String u1 = toBinary(u);
         String v1 = toBinary(v);
         int lu = u1.length();
@@ -600,14 +631,16 @@ public class bigNum {
             lu = lv;
             lv = tmpInt;
         }
+        // OR logic is quite different 
         for (int i = 0; i < lu - lv; i++) result += (u1.charAt(i) == '1') ? '1' : '0';
         for (int i = 0; i < lv; i++){
             result += ((u1.charAt(lu - lv + i) == '1') || (v1.charAt(i) == '1')) ? '1' : '0';
         }
+
         return binaryToBigNum(result);
     }
 
-    public static bigNum xorOperator (bigNum u, bigNum v){
+    public static bigNum xorOperator (bigNum u, bigNum v){ // same but for xor
         String u1 = toBinary(u);
         String v1 = toBinary(v);
         int lu = u1.length();
@@ -621,25 +654,30 @@ public class bigNum {
             lu = lv;
             lv = tmpInt;
         }
+
+        // check the logic again
         for (int i = 0; i < lu - lv; i++) result += (u1.charAt(i) == '1') ? '1' : '0';;
         for (int i = 0; i < lv; i++){
             result += (u1.charAt(lu - lv + i) == v1.charAt(i)) ? '0' : '1';
         }
+
         return binaryToBigNum(result);
     }
 
-    public static bigNum notOperator (bigNum u){
+    public static bigNum notOperator (bigNum u){ // complement but in binary
         String u1 = u.toString();
         String result = "";
         for (int i = 0; i < u1.length(); i++) result += 97 - u1.charAt(i);
         return binaryToBigNum(result);
     }
 
-    public static bigNum leftShiftOperator (bigNum u, int n){
+    public static bigNum leftShiftOperator (bigNum u, int n){ // add n zeros at the end
         return binaryToBigNum(toBinary(u) + "0".repeat(n));
     }
 
-    public static bigNum rightShiftOperator (bigNum u, int n){
+    public static bigNum rightShiftOperator (bigNum u, int n){ // cut n numbers at the end of its binary representation
         return binaryToBigNum(toBinary(u).substring(0, toBinary(u).length() - n));
-    }  
+    }
+    
+    // the end.
 }
